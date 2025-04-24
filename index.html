@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Trivia Question</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      cursor: pointer;
+      background: white;
+      color: black;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    .dark-mode {
+      background: black;
+      color: white;
+    }
+
+    .header-controls {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-bottom: 10px;
+      align-items: center;
+    }
+
+    .invert-button {
+      margin-right: auto;
+      padding: 5px 10px;
+      font-size: 14px;
+      cursor: pointer;
+      background: white;
+      color: black;
+      border: 1px solid #ccc;
+      transition: background 0.3s, color 0.3s, border 0.3s;
+    }
+
+    .dark-mode .invert-button {
+      background: black;
+      color: white;
+      border: 1px solid #666;
+    }
+
+    select {
+      padding: 5px;
+      font-size: 14px;
+      background: white;
+      color: black;
+    }
+
+    .dark-mode select {
+      background: #222;
+      color: white;
+      border: 1px solid #555;
+    }
+
+    .question-box {
+      background: #f9f9f9;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 20px;
+      max-width: 600px;
+      transition: background 0.3s, border 0.3s;
+    }
+
+    .dark-mode .question-box {
+      background: #222;
+      border-color: #444;
+    }
+  </style>
+</head>
+<body>
+  <div class="header-controls">
+    <button class="invert-button">Dark Mode</button>
+    <select id="categorySelect">
+      <option value="">-- Any Category --</option>
+    </select>
+    <select id="difficultySelect">
+      <option value="">-- Any Difficulty --</option>
+      <option value="easy">Easy</option>
+      <option value="medium">Medium</option>
+      <option value="hard">Hard</option> 
+    </select>
+  </div>
+
+  <h1>Random Trivia Question</h1>
+
+  <div class="question-box">
+    <p><strong>Question:</strong> <span id="question">Loading...</span></p>
+    <p><strong>Answers:</strong> <span id="answers">Loading...</span></p>
+  </div>
+
+  <script>
+    function toggleDarkMode() {
+      const body = document.body;
+      const button = document.querySelector(".invert-button");
+
+      body.classList.toggle('dark-mode');
+      button.textContent = body.classList.contains('dark-mode') ? "Light Mode" : "Dark Mode";
+    }
+
+    document.querySelector(".invert-button").addEventListener("click", function(event) {
+      event.stopPropagation();
+      toggleDarkMode();
+    });
+
+    const categories = {
+      "trivia_categories": [
+        {"id":9,"name":"General Knowledge"},
+        {"id":10,"name":"Entertainment: Books"},
+        {"id":11,"name":"Entertainment: Film"},
+        {"id":12,"name":"Entertainment: Music"},
+        {"id":13,"name":"Entertainment: Musicals & Theatres"},
+        {"id":14,"name":"Entertainment: Television"},
+        {"id":15,"name":"Entertainment: Video Games"},
+        {"id":16,"name":"Entertainment: Board Games"},
+        {"id":17,"name":"Science & Nature"},
+        {"id":18,"name":"Science: Computers"},
+        {"id":19,"name":"Science: Mathematics"},
+        {"id":20,"name":"Mythology"},
+        {"id":21,"name":"Sports"},
+        {"id":22,"name":"Geography"},
+        {"id":23,"name":"History"},
+        {"id":24,"name":"Politics"},
+        {"id":25,"name":"Art"},
+        {"id":26,"name":"Celebrities"},
+        {"id":27,"name":"Animals"},
+        {"id":28,"name":"Vehicles"},
+        {"id":29,"name":"Entertainment: Comics"},
+        {"id":30,"name":"Science: Gadgets"},
+        {"id":31,"name":"Entertainment: Japanese Anime & Manga"},
+        {"id":32,"name":"Entertainment: Cartoon & Animations"}
+      ]
+    };
+
+    const categorySelect = document.getElementById("categorySelect");
+    const difficultySelect = document.getElementById("difficultySelect");
+
+    categories.trivia_categories.forEach(cat => {
+      const option = document.createElement("option");
+      option.value = cat.id;
+      option.textContent = cat.name;
+      categorySelect.appendChild(option);
+    });
+
+    let showingCorrect = false;
+
+    async function fetchTrivia() {
+      showingCorrect = false;
+      const questionEl = document.getElementById("question");
+      const answersEl = document.getElementById("answers");
+
+      questionEl.textContent = "Loading...";
+      answersEl.textContent = "Loading...";
+
+      const categoryId = categorySelect.value;
+      const difficulty = difficultySelect.value;
+
+      let url = "https://opentdb.com/api.php?amount=1";
+      if (categoryId) url += `&category=${categoryId}`;
+      if (difficulty) url += `&difficulty=${difficulty}`;
+
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+        const result = data.results[0];
+
+        const decodeHTML = (str) => {
+          const txt = document.createElement("textarea");
+          txt.innerHTML = str;
+          return txt.value;
+        };
+
+        const question = decodeHTML(result.question);
+        const correct = decodeHTML(result.correct_answer);
+        const incorrect = result.incorrect_answers.map(decodeHTML);
+        const allAnswers = [...incorrect, correct].sort(() => Math.random() - 0.5);
+
+        questionEl.textContent = question;
+        answersEl.textContent = allAnswers.join(" | ");
+        document.body.dataset.correct = correct;
+      } catch (error) {
+        questionEl.textContent = "Error loading question.";
+        answersEl.textContent = "";
+        console.error(error);
+      }
+    }
+
+    document.querySelector(".question-box").addEventListener("click", () => {
+      const answersEl = document.getElementById("answers");
+
+      if (!showingCorrect) {
+        answersEl.textContent = document.body.dataset.correct;
+        showingCorrect = true;
+      } else {
+        fetchTrivia();
+      }
+    });
+
+    categorySelect.addEventListener("change", fetchTrivia);
+    difficultySelect.addEventListener("change", fetchTrivia);
+
+    fetchTrivia();
+  </script>
+</body>
+</html>
