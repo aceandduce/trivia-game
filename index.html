@@ -84,6 +84,11 @@
       <option value="medium">Medium</option>
       <option value="hard">Hard</option> 
     </select>
+    <select id="typeSelect">
+      <option value="">-- Any Type --</option>
+      <option value="boolean">True/False</option>
+      <option value="multiple">Multiple Choice</option>
+    </select>
   </div>
 
   <h1>Random Trivia Question</h1>
@@ -138,6 +143,7 @@
 
     const categorySelect = document.getElementById("categorySelect");
     const difficultySelect = document.getElementById("difficultySelect");
+    const typeSelect = document.getElementById("typeSelect");
 
     categories.trivia_categories.forEach(cat => {
       const option = document.createElement("option");
@@ -158,10 +164,12 @@
 
       const categoryId = categorySelect.value;
       const difficulty = difficultySelect.value;
+      const type = typeSelect.value;
 
       let url = "https://opentdb.com/api.php?amount=1";
       if (categoryId) url += `&category=${categoryId}`;
       if (difficulty) url += `&difficulty=${difficulty}`;
+      if (type) url += `&type=${type}`;
 
       try {
         const response = await fetch(url);
@@ -202,6 +210,7 @@
 
     categorySelect.addEventListener("change", fetchTrivia);
     difficultySelect.addEventListener("change", fetchTrivia);
+    typeSelect.addEventListener("change", fetchTrivia);
 
     fetchTrivia();
   </script>
